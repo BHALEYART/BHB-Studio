@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "electron": "^32.2.7",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.bigheadbillionaires.studio",
