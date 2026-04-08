@@ -116,7 +116,7 @@
     "publish": {
       "provider": "github",
       "owner": "BHALEYART",
-      "repo": "bhb-studio"
+      "repo": "BHB-Studio"
     }
   }
 }
