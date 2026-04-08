@@ -1,0 +1,190 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'          # triggers on v1.0.0, v1.2.3, etc.
+  workflow_dispatch:       # manual trigger from GitHub UI
+    inputs:
+      draft:
+        description: 'Create as draft release?'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write          # needed to create GitHub Release
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  #  macOS Build (arm64 + x64 universal)
+  # ─────────────────────────────────────────────────────────────────
+  build-mac:
+    name: macOS Build
+    runs-on: macos-14      # Apple Silicon runner (builds both arches via electron-builder)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Optional: macOS code signing ──────────────────────────────
+      # Set these secrets in GitHub repo → Settings → Secrets → Actions:
+      #   APPLE_CERTIFICATE_BASE64    — base64-encoded .p12 file
+      #   APPLE_CERTIFICATE_PASSWORD  — .p12 password
+      #   APPLE_TEAM_ID               — 10-char Apple Developer Team ID
+      #   APPLE_ID                    — Apple ID email for notarization
+      #   APPLE_APP_PASSWORD          — App-specific password for notarization
+      #
+      # Without these secrets the build is UNSIGNED (users will see
+      # "unidentified developer" warning — can be bypassed via right-click → Open).
+      - name: Import Apple certificate (if available)
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 != '' }}
+        env:
+          APPLE_CERTIFICATE_BASE64:   ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app.keychain-db"
+          KEYCHAIN_PASS=$(openssl rand -base64 16)
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o /tmp/cert.p12
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security import /tmp/cert.p12 -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+      - name: Build macOS (arm64 + x64)
+        env:
+          # Signing (optional — left blank = unsigned build)
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' && 'true' || 'false' }}
+          APPLE_TEAM_ID:      ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID:           ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          # GitHub token for publishing
+          GH_TOKEN:           ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run build:mac
+          ls -lh dist/
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-builds
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Windows Build
+  # ─────────────────────────────────────────────────────────────────
+  build-win:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Optional: Windows code signing ────────────────────────────
+      # Set these secrets:
+      #   WIN_CSC_LINK          — base64-encoded .pfx or .p12 file
+      #   WIN_CSC_KEY_PASSWORD  — certificate password
+      #
+      # Without these the build is unsigned (SmartScreen warning on first run).
+      - name: Build Windows (x64)
+        env:
+          CSC_LINK:         ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          GH_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run build:win
+          dir dist\
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-builds
+          path: |
+            dist/*.exe
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Publish GitHub Release
+  # ─────────────────────────────────────────────────────────────────
+  release:
+    name: Publish Release
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout (for release notes)
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: List artifacts
+        run: find artifacts/ -type f | sort
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name:  "BHB Studio ${{ github.ref_name }}"
+          draft: ${{ github.event.inputs.draft == 'true' || false }}
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 🍔 BHB Studio ${{ github.ref_name }}
+
+            Big Head Billionaires — Character Customizer & Animator desktop app.
+
+            ### Downloads
+            | Platform | File | Notes |
+            |----------|------|-------|
+            | macOS (Apple Silicon) | `BHB-Studio-*-arm64.dmg` | M1/M2/M3 Mac |
+            | macOS (Intel) | `BHB-Studio-*-x64.dmg` | Intel Mac |
+            | macOS (Universal ZIP) | `BHB-Studio-*-mac.zip` | Both arches |
+            | Windows 10/11 | `BHB-Studio-*-Setup.exe` | NSIS installer |
+            | Windows (portable) | `BHB-Studio-*-Portable.exe` | No install needed |
+
+            ### ⚠️ First-launch notes
+            **macOS:** If you see _"unidentified developer"_ — right-click the app → **Open** → Open.
+            Or run: `xattr -cr "/Applications/BHB Studio.app"` in Terminal.
+
+            **Windows:** Click **More info → Run anyway** on the SmartScreen popup.
+
+            ### Features
+            - 🎨 Full Character Customizer with all traits & Founder Pack expansion support
+            - 🎬 Character Animator with audio recording, auto lip-sync, keyframe expressions, DUO Scenes
+            - 🎥 Native export dialogs — PNG, MP4/WebM video saved directly to your chosen folder
+            - 💾 Auto-saves character builds in local storage between sessions
+            - 🎵 Music track support with fade in/out
+            - ⛓ Wallet features: use the web app at bigheadbillionaires.com
+
+          files: |
+            artifacts/mac-builds/*.dmg
+            artifacts/mac-builds/*.zip
+            artifacts/win-builds/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,94 @@
+{
+  "name": "bhb-studio",
+  "productName": "BHB Studio",
+  "version": "1.0.0",
+  "description": "Big Head Billionaires — Character Customizer & Animator",
+  "main": "main.js",
+  "scripts": {
+    "start":       "electron .",
+    "build":       "electron-builder --mac --win",
+    "build:mac":   "electron-builder --mac",
+    "build:win":   "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "pack":        "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron":         "^32.2.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId":       "com.bigheadbillionaires.studio",
+    "productName": "BHB Studio",
+    "copyright":   "© 2025 Big Head Billionaires",
+
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+
+    "mac": {
+      "category":   "public.app-category.graphics-design",
+      "icon":       "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements":        "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ]
+    },
+
+    "dmg": {
+      "title":   "${productName} ${version}",
+      "icon":    "build/icon.icns",
+      "window":  { "width": 540, "height": 380 },
+      "contents": [
+        { "x": 140, "y": 200, "type": "file" },
+        { "x": 400, "y": 200, "type": "link", "path": "/Applications" }
+      ]
+    },
+
+    "win": {
+      "icon":           "build/icon.ico",
+      "publisherName":  "Big Head Billionaires",
+      "target": [
+        { "target": "nsis",     "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+
+    "nsis": {
+      "oneClick":                         false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon":   "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BHB Studio"
+    },
+
+    "linux": {
+      "icon":     "build/icon.png",
+      "category": "Graphics",
+      "target":   ["AppImage", "deb"]
+    },
+
+    "publish": {
+      "provider": "github",
+      "owner":    "BHALEYART",
+      "repo":     "bhb-studio"
+    },
+
+    "extraMetadata": {
+      "version": "${version}"
+    }
+  }
+}
