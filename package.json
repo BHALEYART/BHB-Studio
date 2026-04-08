@@ -85,10 +85,6 @@
       "provider": "github",
       "owner":    "BHALEYART",
       "repo":     "bhb-studio"
-    },
-
-    "extraMetadata": {
-      "version": "${version}"
     }
   }
 }
