@@ -32,18 +32,17 @@
       "renderer/**/*"
     ],
 
-    "mac": {
-      "category":   "public.app-category.graphics-design",
-      "icon":       "build/icon.icns",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements":        "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
-      ]
-    },
+  "mac": {
+  "category": "public.app-category.graphics-design",
+  "icon": "build/icon.icns",
+  "hardenedRuntime": true,
+  "gatekeeperAssess": false,
+  "entitlements": "build/entitlements.mac.plist",
+  "entitlementsInherit": "build/entitlements.mac.plist",
+  "target": [
+    { "target": "dmg", "arch": ["universal"] }
+  ]
+},
 
     "dmg": {
       "title":   "${productName} ${version}",
@@ -59,8 +58,7 @@
       "icon":           "build/icon.ico",
       "publisherName":  "Big Head Billionaires",
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        { "target": "nsis",     "arch": ["x64"] }
       ]
     },
 
