@@ -1165,7 +1165,20 @@ body.electron-app .canvas-wrap.duo-mode {
 //  Export mixes both tracks down into the output video.
 // ═══════════════════════════════════════════════════════
 
-const ASSET_BASE    = 'https://bhaleyart.github.io/BigHeadCharacterCooker';
+
+// ── Asset base: local bundle when running in desktop app ──────────
+// In Electron the assets are bundled at renderer/assets/characters/
+// relative to the HTML file (one level up = ../assets/characters/).
+// Falls back to CDN for web browser use.
+const ASSET_BASE = (function() {
+  if (window.electronAPI?.isElectron) {
+    // file:// path relative to this HTML file's directory
+    const base = window.location.href.replace(/\/[^\/]+$/, '');
+    return base.replace(/\/customizer$|\/animator$/, '') + '/assets/characters';
+  }
+  return 'https://bhaleyart.github.io/BigHeadCharacterCooker';
+})();
+
 const HELIUS_DAS    = 'https://mainnet.helius-rpc.com/?api-key=a88e4b38-304e-407a-89c8-91c904b08491';
 const FXP_COLLECTION = 'GDhWXBvj4VgPhm7htMpVMC8MrCzS6PoGiWCzRLb7QoAp';
 
