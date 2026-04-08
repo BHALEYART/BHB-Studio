@@ -2,7 +2,7 @@
   "name": "bhb-studio",
   "productName": "BHB Studio",
   "version": "1.0.0",
-  "description": "Big Head Billionaires \u2014 Character Customizer & Animator",
+  "description": "Big Head Billionaires — Character Customizer & Animator",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -21,7 +21,7 @@
   "build": {
     "appId": "com.bigheadbillionaires.studio",
     "productName": "BHB Studio",
-    "copyright": "\u00a9 2025 Big Head Billionaires",
+    "copyright": "© 2025 Big Head Billionaires",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -40,59 +40,16 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ]
-    },
-    "dmg": {
-      "title": "${productName} ${version}",
-      "icon": "build/icon.icns",
-      "window": {
-        "width": 540,
-        "height": 380
-      },
-      "contents": [
-        {
-          "x": 140,
-          "y": 200,
-          "type": "file"
-        },
-        {
-          "x": 400,
-          "y": 200,
-          "type": "link",
-          "path": "/Applications"
-        }
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
       ]
     },
     "win": {
       "icon": "build/icon.ico",
       "publisherName": "Big Head Billionaires",
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
+        { "target": "nsis",     "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
       ]
     },
     "nsis": {
@@ -108,10 +65,7 @@
     "linux": {
       "icon": "build/icon.png",
       "category": "Graphics",
-      "target": [
-        "AppImage",
-        "deb"
-      ]
+      "target": ["AppImage", "deb"]
     },
     "publish": {
       "provider": "github",
