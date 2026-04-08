@@ -1182,7 +1182,7 @@ const ASSET_BASE = (function() {
 const HELIUS_DAS    = 'https://mainnet.helius-rpc.com/?api-key=a88e4b38-304e-407a-89c8-91c904b08491';
 const FXP_COLLECTION = 'GDhWXBvj4VgPhm7htMpVMC8MrCzS6PoGiWCzRLb7QoAp';
 
-let hasFounderPack = false;
+let hasFounderPack = !!(window.electronAPI?.isElectron); // unlocked in desktop app
 
 function isExpLocked(cat, idx) {
   const file = TRAITS[cat]?.files?.[idx] ?? '';
@@ -1221,7 +1221,7 @@ document.addEventListener('bhb:wallet-connected', e => {
   checkFounderPackOwnership(e.detail?.address ?? window.BHB?.walletAddress);
 });
 document.addEventListener('bhb:wallet-disconnected', () => {
-  hasFounderPack = false;
+  if (!window.electronAPI?.isElectron) hasFounderPack = false; // keep unlocked on desktop
   renderFrame();
 });
 
