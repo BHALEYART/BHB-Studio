@@ -63,6 +63,10 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: \
             -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
 
+
+      - name: Download & bundle character assets
+        run: node scripts/download-assets.js
+
       - name: Build macOS (arm64 + x64)
         env:
           # Signing (optional — left blank = unsigned build)
@@ -110,6 +114,10 @@ jobs:
       #   WIN_CSC_KEY_PASSWORD  — certificate password
       #
       # Without these the build is unsigned (SmartScreen warning on first run).
+
+      - name: Download & bundle character assets
+        run: node scripts/download-assets.js
+
       - name: Build Windows (x64)
         env:
           CSC_LINK:         ${{ secrets.WIN_CSC_LINK }}
